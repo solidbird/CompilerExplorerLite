@@ -6,6 +6,6 @@
 #define SCREEN_HEIGHT 500
 #define TITLE_TEXT "CompilerExplorerLite"
 
-#define FONT_SIZE 8
+#define FONT_SIZE 6
 
 #endif
