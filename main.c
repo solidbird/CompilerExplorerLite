@@ -26,15 +26,27 @@ typedef struct {
 	Color color;
 } MapColor;
 
-void remove_spaces(char* s){
+
+char* remove_spaces(const char* s){
 	char* d = s;
-	do {
-		while (*d == ' ') {
-			++d;
+	char* tmp = (char*) malloc(strlen(d)+1);
+	strcpy(tmp, d);
+	int i = -1;
+	
+	do{
+		while (*d == ' ' || *d == '\t') {
+			d++;
 		}
-	} while(*s++ = *d++);
+		i++;
+	}while(tmp[i] = *d++);
+	return tmp; 
 }
 
+/*
+TODO: Try to set fseek for the last possition of obj_line that way
+we dont go all the way back to the start but we stay in the context of the current thing (function, while, for, etc.)
+otherwise the brackets are making everything weird and break
+*/
 MapColor get_obj_block(char* obj_file, char* line, char* next_line){
 	FILE *obj_fp;
 	char *obj_line = NULL;
@@ -45,15 +57,24 @@ MapColor get_obj_block(char* obj_file, char* line, char* next_line){
 	obj_build[0] = '\0';
 
 	obj_fp = fopen(obj_file, "r");
-
+	
+	char* obj_line_clean;
+	char* line_clean = remove_spaces(line);
+	char* next_line_clean = remove_spaces(next_line);
+	
 	while ((obj_read = getline(&obj_line, &obj_len, obj_fp)) != -1) {
-		if (strstr(obj_line, line) == NULL){ 
+		obj_line_clean = remove_spaces(obj_line);
+		if (strstr(obj_line_clean, line_clean) == NULL){ 
 			continue;
 		}
 			
+		//printf("BLOCK: %s", line);
 		printf("SRC: %s, OBJ: %s\n", line, obj_line);
 		while ((obj_read = getline(&obj_line, &obj_len, obj_fp)) != -1){
-			if (strstr(obj_line, next_line) != NULL){
+			obj_line_clean = remove_spaces(obj_line);
+	
+			strcat(obj_build, obj_line);
+			if (strstr(obj_line_clean, next_line_clean) != NULL){
 				printf("BLOCK: %s\n", obj_build);
 				MapColor mpc = {
 					.src = line,
@@ -65,8 +86,18 @@ MapColor get_obj_block(char* obj_file, char* line, char* next_line){
 				fclose(obj_fp);
 				return mpc;
 			}
-			strcat(obj_build, obj_line);
 		}
+		printf("BLOCK: %s\n", obj_build);
+		MapColor mpc = {
+			.src = line,
+			.obj = obj_build,
+			.color = RED
+		};
+
+		obj_build[0] = '\0';
+		fclose(obj_fp);
+		return mpc;
+		
 	}
 
 	fclose(obj_fp);
@@ -82,13 +113,19 @@ MapColor* scan_obj(char* src_file, char* obj_file){
 	MapColor mpc[1024];	
 
 	size_t i = 0;
+	long pos = NULL;
 
 	while ((src_read = getline(&src_line, &src_len, src_fp)) != -1) {
-		FILE *tmp = src_fp;	
-	
+		if (src_line[0] == '\n'){ continue; }
+
 		char* line = src_line;
 		char* next_line = NULL;
-		getline(&next_line, &src_len, tmp);
+		fflush(src_fp);
+		pos = ftell(src_fp);
+
+
+		getline(&next_line, &src_len, src_fp);
+		fseek(src_fp, pos, SEEK_SET);
 
 		mpc[i++] = get_obj_block(obj_file, line, next_line);
 	}
@@ -97,7 +134,6 @@ MapColor* scan_obj(char* src_file, char* obj_file){
 	return mpc;
 }
 
-//TODO: DOESNT WORK WITH OBJDUMP YET
 char* create_buid_objdump(char* src_file){
 	const char *cmd_build = "/bin/gcc";
 	
@@ -149,9 +185,10 @@ void text_area(Vector2 pos, Vector2 size, Color color, float border_thickness, c
 int main(){
 
 	//create_buid_objdump("example/square.c");
+	
 	MapColor *mpc;
 	mpc = scan_obj("example/square.c", "example/square.c.s");
-	printf("SRC: %s\nOBJ: %s\nCOLOR: %s\n", mpc[0].src, mpc[0].obj, mpc[0].color);
+	
 	return 0;
 
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE_TEXT);

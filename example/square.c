@@ -8,6 +8,11 @@ void test(int a, int b, int c){
 	a = c;
 	c = tmp1;
 	b = b * b;
+	while(b == 2){
+		square(b);
+	}
 }
 
-void main(){}
+int main(){
+	return 0;
+}

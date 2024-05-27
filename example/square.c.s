@@ -41,7 +41,7 @@ Disassembly of section .text:
     1052:	54                   	push   rsp
     1053:	45 31 c0             	xor    r8d,r8d
     1056:	31 c9                	xor    ecx,ecx
-    1058:	48 8d 3d 12 01 00 00 	lea    rdi,[rip+0x112]        # 1171 <main>
+    1058:	48 8d 3d 29 01 00 00 	lea    rdi,[rip+0x129]        # 1188 <main>
     105f:	ff 15 73 2f 00 00    	call   QWORD PTR [rip+0x2f73]        # 3fd8 <__libc_start_main@GLIBC_2.34>
     1065:	f4                   	hlt    
     1066:	66 2e 0f 1f 84 00 00 	cs nop WORD PTR [rax+rax*1+0x0]
@@ -120,44 +120,58 @@ void test(int a, int b, int c){
     113c:	f3 0f 1e fa          	endbr64 
     1140:	55                   	push   rbp
     1141:	48 89 e5             	mov    rbp,rsp
-    1144:	89 7d ec             	mov    DWORD PTR [rbp-0x14],edi
-    1147:	89 75 e8             	mov    DWORD PTR [rbp-0x18],esi
-    114a:	89 55 e4             	mov    DWORD PTR [rbp-0x1c],edx
+    1144:	48 83 ec 20          	sub    rsp,0x20
+    1148:	89 7d ec             	mov    DWORD PTR [rbp-0x14],edi
+    114b:	89 75 e8             	mov    DWORD PTR [rbp-0x18],esi
+    114e:	89 55 e4             	mov    DWORD PTR [rbp-0x1c],edx
 	int tmp1 = a;
-    114d:	8b 45 ec             	mov    eax,DWORD PTR [rbp-0x14]
-    1150:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+    1151:	8b 45 ec             	mov    eax,DWORD PTR [rbp-0x14]
+    1154:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
 	int tmp2 = c;
-    1153:	8b 45 e4             	mov    eax,DWORD PTR [rbp-0x1c]
-    1156:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+    1157:	8b 45 e4             	mov    eax,DWORD PTR [rbp-0x1c]
+    115a:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
 	a = c;
-    1159:	8b 45 e4             	mov    eax,DWORD PTR [rbp-0x1c]
-    115c:	89 45 ec             	mov    DWORD PTR [rbp-0x14],eax
+    115d:	8b 45 e4             	mov    eax,DWORD PTR [rbp-0x1c]
+    1160:	89 45 ec             	mov    DWORD PTR [rbp-0x14],eax
 	c = tmp1;
-    115f:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
-    1162:	89 45 e4             	mov    DWORD PTR [rbp-0x1c],eax
+    1163:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+    1166:	89 45 e4             	mov    DWORD PTR [rbp-0x1c],eax
 	b = b * b;
-    1165:	8b 45 e8             	mov    eax,DWORD PTR [rbp-0x18]
-    1168:	0f af c0             	imul   eax,eax
-    116b:	89 45 e8             	mov    DWORD PTR [rbp-0x18],eax
+    1169:	8b 45 e8             	mov    eax,DWORD PTR [rbp-0x18]
+    116c:	0f af c0             	imul   eax,eax
+    116f:	89 45 e8             	mov    DWORD PTR [rbp-0x18],eax
+	while(b == 2){
+    1172:	eb 0a                	jmp    117e <test+0x42>
+		square(b);
+    1174:	8b 45 e8             	mov    eax,DWORD PTR [rbp-0x18]
+    1177:	89 c7                	mov    edi,eax
+    1179:	e8 ab ff ff ff       	call   1129 <square>
+	while(b == 2){
+    117e:	83 7d e8 02          	cmp    DWORD PTR [rbp-0x18],0x2
+    1182:	74 f0                	je     1174 <test+0x38>
+	}
 }
-    116e:	90                   	nop
-    116f:	5d                   	pop    rbp
-    1170:	c3                   	ret    
+    1184:	90                   	nop
+    1185:	90                   	nop
+    1186:	c9                   	leave  
+    1187:	c3                   	ret    
 
-0000000000001171 <main>:
+0000000000001188 <main>:
 
-void main(){}
-    1171:	f3 0f 1e fa          	endbr64 
-    1175:	55                   	push   rbp
-    1176:	48 89 e5             	mov    rbp,rsp
-    1179:	90                   	nop
-    117a:	5d                   	pop    rbp
-    117b:	c3                   	ret    
+int main(){
+    1188:	f3 0f 1e fa          	endbr64 
+    118c:	55                   	push   rbp
+    118d:	48 89 e5             	mov    rbp,rsp
+	return 0;
+    1190:	b8 00 00 00 00       	mov    eax,0x0
+}
+    1195:	5d                   	pop    rbp
+    1196:	c3                   	ret    
 
 Disassembly of section .fini:
 
-000000000000117c <_fini>:
-    117c:	f3 0f 1e fa          	endbr64 
-    1180:	48 83 ec 08          	sub    rsp,0x8
-    1184:	48 83 c4 08          	add    rsp,0x8
-    1188:	c3                   	ret    
+0000000000001198 <_fini>:
+    1198:	f3 0f 1e fa          	endbr64 
+    119c:	48 83 ec 08          	sub    rsp,0x8
+    11a0:	48 83 c4 08          	add    rsp,0x8
+    11a4:	c3                   	ret    
