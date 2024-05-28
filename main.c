@@ -26,6 +26,7 @@ typedef struct {
 	Color color;
 } MapColor;
 
+long last_position = 0L;
 
 char* remove_spaces(const char* s){
 	char* d = s;
@@ -62,6 +63,8 @@ MapColor get_obj_block(char* obj_file, char* line, char* next_line){
 	char* line_clean = remove_spaces(line);
 	char* next_line_clean = remove_spaces(next_line);
 	
+	fseek(obj_fp, last_position, SEEK_SET);
+
 	while ((obj_read = getline(&obj_line, &obj_len, obj_fp)) != -1) {
 		obj_line_clean = remove_spaces(obj_line);
 		if (strstr(obj_line_clean, line_clean) == NULL){ 
@@ -70,14 +73,34 @@ MapColor get_obj_block(char* obj_file, char* line, char* next_line){
 			
 		//printf("BLOCK: %s", line);
 		printf("SRC: %s, OBJ: %s\n", line, obj_line);
+
+		if(strlen(next_line) == 0){
+			while ((obj_read = getline(&obj_line, &obj_len, obj_fp)) != -1){
+				strcat(obj_build, obj_line);
+				if(obj_line[0] == '\n'){
+					printf("BLOCK: %s\n", obj_build);
+					MapColor mpc = {
+						.src = next_line,
+						.obj = obj_build,
+						.color = RED
+					};
+
+					last_position = ftell(obj_fp);
+					obj_build[0] = '\0';
+					fclose(obj_fp);
+					return mpc;
+				} 
+			}
+		}
+
+		last_position = ftell(obj_fp);
 		while ((obj_read = getline(&obj_line, &obj_len, obj_fp)) != -1){
 			obj_line_clean = remove_spaces(obj_line);
 	
-			strcat(obj_build, obj_line);
 			if (strstr(obj_line_clean, next_line_clean) != NULL){
 				printf("BLOCK: %s\n", obj_build);
 				MapColor mpc = {
-					.src = line,
+					.src = next_line,
 					.obj = obj_build,
 					.color = RED
 				};
@@ -85,32 +108,23 @@ MapColor get_obj_block(char* obj_file, char* line, char* next_line){
 				obj_build[0] = '\0';
 				fclose(obj_fp);
 				return mpc;
+			}else{
+				strcat(obj_build, obj_line);
 			}
+			
 		}
-		printf("BLOCK: %s\n", obj_build);
-		MapColor mpc = {
-			.src = line,
-			.obj = obj_build,
-			.color = RED
-		};
-
-		obj_build[0] = '\0';
-		fclose(obj_fp);
-		return mpc;
-		
 	}
 
 	fclose(obj_fp);
 }
 
-MapColor* scan_obj(char* src_file, char* obj_file){
+void scan_obj(char* src_file, char* obj_file, MapColor *block){
 	FILE *src_fp;
 	char *src_line = NULL;
 	size_t src_len = 0;
 	ssize_t src_read;
 
 	src_fp = fopen(src_file, "r");
-	MapColor mpc[1024];	
 
 	size_t i = 0;
 	long pos = NULL;
@@ -123,15 +137,14 @@ MapColor* scan_obj(char* src_file, char* obj_file){
 		fflush(src_fp);
 		pos = ftell(src_fp);
 
-
 		getline(&next_line, &src_len, src_fp);
 		fseek(src_fp, pos, SEEK_SET);
-
-		mpc[i++] = get_obj_block(obj_file, line, next_line);
+		
+		block[i] = get_obj_block(obj_file, line, next_line);
+		i++;
 	}
 
 	fclose(src_fp);
-	return mpc;
 }
 
 char* create_buid_objdump(char* src_file){
@@ -186,9 +199,10 @@ int main(){
 
 	//create_buid_objdump("example/square.c");
 	
-	MapColor *mpc;
-	mpc = scan_obj("example/square.c", "example/square.c.s");
-	
+	MapColor *mpc = (MapColor*) malloc(sizeof(MapColor) * 1024);
+	scan_obj("example/square.c", "example/square.c.s", mpc);
+	printf("\n\nSOURCE: %s, OBJECT: %s\n\n", mpc[5].src, mpc[5].obj);	
+	free(mpc);
 	return 0;
 
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE_TEXT);
