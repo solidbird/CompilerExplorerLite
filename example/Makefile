@@ -1,14 +1,10 @@
 .PHONY: all
 .PHONY: clean
-.PHONY: display
 
-all: clean square display
+all: clean square.c.s
 
 clean:
-	rm square.s
+	rm square.c.s
 
-square: square.c
-	gcc -g square.c -o square.s
-	
-display: square
-	objdump -S square -M intel 	
+square.c.s: square.c
+	gcc -S -masm=intel -fverbose-asm square.c -o square.c.s
