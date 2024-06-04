@@ -156,8 +156,8 @@ int line_count(char* str){
 
 int main(){
 
-	char* src_file = "main.c";
-	char* asm_file = "main.c.s";
+	char* src_file = "example/square.c";
+	char* asm_file = "example/square.c.s";
 
 	MapSrc* ms = prepare_src_asm_mapping(asm_file, src_file);
 	MapSrc* tmp_ms = ms;
@@ -191,8 +191,12 @@ int main(){
 	
 		BeginMode2D(camera);
 		while(tmp_ms != NULL){
-			src_line_pos = i*(FONT_SIZE + 5);
-
+			if(tmp_ms->parent != NULL){
+				asm_block_pos += ((FONT_SIZE + 5) * tmp_ms->parent->asm_line_count+ (FONT_SIZE + 5)+ (FONT_SIZE + 5));
+			}
+			
+			src_line_pos = asm_block_pos;
+ 
 			text_area(
 				(Vector2){0,src_line_pos},
 				(Vector2){SCREEN_HEIGHT, SCREEN_WIDTH/2},
@@ -200,14 +204,10 @@ int main(){
 				0.0,
 				tmp_ms->src_line
 			);	
-			
-			if(tmp_ms->parent != NULL){
-				asm_block_pos += ((FONT_SIZE + 5) * tmp_ms->parent->asm_line_count) + 5;
-			}
 
 			text_area(
-				(Vector2){SCREEN_WIDTH/2, asm_block_pos},
-				(Vector2){SCREEN_HEIGHT, SCREEN_WIDTH},
+				(Vector2){80, asm_block_pos + (FONT_SIZE + 5)},
+				(Vector2){SCREEN_WIDTH, tmp_ms->asm_line_count * (FONT_SIZE + 5)},
 				tmp_ms->color,
 				0.0,
 				tmp_ms->asm_block
@@ -222,11 +222,11 @@ int main(){
 		free(tmp_ms);
 		tmp_ms = ms;
 		
-		DrawLineV(
+		/*DrawLineV(
 			(Vector2){ SCREEN_WIDTH/2, 0 },
 			(Vector2){ SCREEN_WIDTH/2, SCREEN_HEIGHT },
 			WHITE
-		);
+		);*/
 		EndDrawing();
 	}
 
